@@ -1,0 +1,97 @@
+/*
+ * Design tokens. DESIGN.md is the source of truth; this file is its executable half.
+ *
+ * Tailwind v4 is CSS-first: everything under @theme becomes a utility, so `--color-brass`
+ * gives `bg-brass`, `text-brass`, `border-brass`. There is no tailwind.config.js.
+ *
+ * A hex value written anywhere else in the codebase is a bug. If a colour is needed and
+ * missing, it goes in DESIGN.md first and then here.
+ */
+
+@import 'tailwindcss';
+
+@theme {
+  /* ── Colour ───────────────────────────────────────────────────────────────
+     Switchboard: an operator patching a short code through to a destination.
+     Warm industrial — brass, oxidised green, signal red on oat paper. The oat
+     is deliberately cooler than the cream every AI design reaches for. */
+  --color-ink: #16150f;
+  --color-ink-soft: #4a483c;
+  --color-paper: #e9e7de;
+  --color-plate: #fdfcf7;
+  --color-brass: #c8912b;
+  --color-brass-deep: #9a6d1c;
+  --color-patch: #2f6b4f;
+  --color-signal: #d93a2b;
+  --color-hairline: #cbc8ba;
+
+  /* ── Type ─────────────────────────────────────────────────────────────────
+     Bricolage Grotesque for display — variable, slightly irregular, and not the
+     Space Grotesk / Archivo Black pairing that every neo-brutalist template uses.
+     JetBrains Mono carries Short Codes and URLs, which are monospace by nature:
+     the product's own material, not a stylistic borrow. */
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Inter Tight', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  --text-display: 3.5rem;
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 800;
+
+  --text-title: 2rem;
+  --text-title--line-height: 1.05;
+  --text-title--letter-spacing: -0.02em;
+  --text-title--font-weight: 700;
+
+  --text-lede: 1.125rem;
+  --text-lede--line-height: 1.5;
+
+  /* ── Structure ────────────────────────────────────────────────────────────
+     Zero radius everywhere. Not a stylistic tic: a plate either has a corner or
+     it does not, and half-rounded neo-brutalism reads as an unfinished theme. */
+  --radius-none: 0;
+
+  --border-plate: 3px;
+
+  /* Offset shadows are cast in BRASS, not black. One change, and the design stops
+     looking like every neo-brutalist template on Dribbble. */
+  --shadow-plate: 4px 4px 0 var(--color-brass);
+  --shadow-plate-lg: 7px 7px 0 var(--color-brass);
+  --shadow-plate-signal: 4px 4px 0 var(--color-signal);
+  --shadow-plate-pressed: 1px 1px 0 var(--color-brass);
+}
+
+@layer base {
+  html {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    /* The design has hard edges; keep the type from looking brittle beside them. */
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+   * Focus is part of the design, not an afterthought bolted on at the end. A hard
+   * brass ring is legible against every surface in the palette, which is the whole
+   * reason the palette has only two surfaces.
+   */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 3px solid var(--color-brass);
+    outline-offset: 2px;
+  }
+
+  /*
+   * The split-flap signature animates. Someone who has asked their system not to
+   * animate gets the same information, instantly, with no motion.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
