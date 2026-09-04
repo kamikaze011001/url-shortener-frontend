@@ -1,6 +1,6 @@
 Vendored from url-shortener-kb
 repo:     https://github.com/kamikaze011001/url-shortener-kb
-revision: 5cbd0e5bcd79fbde80fc6e09388d6d5285217546
+revision: 504c633bf2a79bbcbd69081612c1d2b90304b78a
 branch:   main
 
 Types in src/api/schema.d.ts are generated from contracts/openapi.yaml.
