@@ -3,6 +3,7 @@ import { AppShell } from '@/components/AppShell'
 import { AuthScreen } from '@/features/auth/AuthScreen'
 import { RequireSession } from '@/features/auth/RequireSession'
 import { DashboardScreen } from '@/features/links/DashboardScreen'
+import { LinkDetailScreen } from '@/features/links/LinkDetailScreen'
 import { NotFoundScreen } from '@/features/NotFoundScreen'
 
 /**
@@ -22,6 +23,7 @@ export function AppRoutes() {
       <Route element={<RequireSession />}>
         <Route element={<AppShell />}>
           <Route path="/" element={<DashboardScreen />} />
+          <Route path="/links/:id" element={<LinkDetailScreen />} />
         </Route>
       </Route>
 

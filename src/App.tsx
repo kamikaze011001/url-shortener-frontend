@@ -2,6 +2,7 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@ta
 import { BrowserRouter } from 'react-router'
 import { ApiError } from './api/client'
 import { keys } from './api/queries'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { AppRoutes } from './routes'
 
 /**
@@ -37,7 +38,9 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <AppRoutes />
+        <ErrorBoundary>
+          <AppRoutes />
+        </ErrorBoundary>
       </BrowserRouter>
     </QueryClientProvider>
   )
