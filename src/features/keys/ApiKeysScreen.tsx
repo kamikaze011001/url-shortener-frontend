@@ -57,7 +57,6 @@ export function ApiKeysScreen() {
             maxLength={64}
             value={name}
             onChange={(event) => setName(event.target.value)}
-            hint="For your own reference, like “CI pipeline”."
             error={failure?.fieldError('name')}
             className="min-w-64 flex-1"
           />
@@ -65,6 +64,15 @@ export function ApiKeysScreen() {
             Create key
           </Button>
         </form>
+
+        {/* Outside the form row, not a `hint` on the Field. `items-end` aligns flex
+            children by their bottom edge, and a Field with a hint is taller than its
+            input — so the button was aligning to the bottom of the hint and hanging
+            28px below the input it belongs to. Anything laying a Field beside a control
+            in an items-end row has the same trap. */}
+        <p className="text-ink-soft mt-2 text-[13px]">
+          For your own reference, like “CI pipeline”.
+        </p>
 
         {failure && failure.problem.code !== 'VALIDATION_FAILED' ? (
           <FormAlert className="mt-5">
