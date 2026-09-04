@@ -22,7 +22,10 @@ export function Field({
   const id = useId()
   const errorId = `${id}-error`
   const hintId = `${id}-hint`
-  const describedBy = [hint ? hintId : null, error ? errorId : null].filter(Boolean).join(' ')
+  // When there is an error, it is the only description. Announcing the hint first makes a
+  // screen reader read the advice the user has just failed to follow before telling them
+  // what actually went wrong; the hint stays on screen for anyone reading it.
+  const describedBy = error ? errorId : hint ? hintId : undefined
 
   return (
     <div className={className}>
@@ -37,7 +40,7 @@ export function Field({
         {...props}
         id={id}
         aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy || undefined}
+        aria-describedby={describedBy}
         className={`font-body mt-2 min-h-11 w-full border-3 px-3 text-[15px] ${
           error ? 'border-signal bg-plate' : 'border-ink bg-plate'
         }`}

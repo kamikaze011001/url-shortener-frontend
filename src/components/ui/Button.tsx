@@ -22,11 +22,33 @@ const VARIANTS: Record<Variant, string> = {
   ghost: 'text-ink-soft hover:text-ink underline decoration-2 underline-offset-4',
 }
 
+/**
+ * A toggle that is currently on, drawn as physically pushed in — sitting on its shadow
+ * rather than above it. Selection is depth first and colour second, which is the same
+ * language the rest of the system uses and needs no new token.
+ */
+const PRESSED = `${RAISED} bg-ink text-plate shadow-plate-pressed translate-x-[3px] translate-y-[3px]`
+
+/**
+ * Pass `pressed` for a toggle — a filter that is on, a view that is selected. It replaces
+ * the variant's own fill rather than layering over it: Tailwind resolves two conflicting
+ * utilities by their order in the stylesheet, not by their order in the class attribute,
+ * so `bg-ink text-plate` appended after `bg-plate text-ink` is a coin toss. It came up
+ * ink-on-ink, and the selected filter's label was invisible.
+ */
 export function Button({
   variant = 'secondary',
+  pressed,
   type = 'button',
   className = '',
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
-  return <button type={type} className={`${BASE} ${VARIANTS[variant]} ${className}`} {...props} />
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; pressed?: boolean }) {
+  return (
+    <button
+      type={type}
+      aria-pressed={pressed}
+      className={`${BASE} ${pressed ? PRESSED : VARIANTS[variant]} ${className}`}
+      {...props}
+    />
+  )
 }

@@ -1,22 +1,26 @@
-import { useMe } from '@/api/queries'
-import { Plate } from '@/components/ui/Plate'
+import { useState } from 'react'
+import type { Link } from '@/api/types'
+import { CreateLinkForm } from './CreateLinkForm'
+import { LinkTable } from './LinkTable'
+import { NewLinkReveal } from './NewLinkReveal'
 
 /**
- * Placeholder. The create form and the Link table land here in the next step; this exists
- * so the router, the session gate and the shell can be exercised on their own.
+ * The whole product on one screen: create at the top, everything you have below.
+ *
+ * The most recently created Link is held here rather than inside the form, so the reveal
+ * stays on screen while the form clears and is typed into again.
  */
 export function DashboardScreen() {
-  const { data: owner } = useMe()
+  const [created, setCreated] = useState<Link | null>(null)
 
   return (
-    <main className="mx-auto max-w-[1120px] px-6 py-16">
-      <h1 className="font-display text-display">Your links</h1>
-      <Plate className="mt-10 p-6">
-        <p className="text-ink-soft text-[15px]">
-          Signed in as <span className="text-ink font-mono">{owner?.email}</span>. The create form
-          and the link table arrive in the next step.
-        </p>
-      </Plate>
+    <main className="mx-auto max-w-[1120px] px-6 py-12">
+      <CreateLinkForm onCreated={setCreated} />
+
+      {/* Keyed by id so a second creation remounts the reveal and the flaps run again. */}
+      {created ? <NewLinkReveal key={created.id} link={created} /> : null}
+
+      <LinkTable />
     </main>
   )
 }

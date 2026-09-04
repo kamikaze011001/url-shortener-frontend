@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, api } from './client'
-import type { Owner } from './types'
+import type { CreateLinkRequest, Link, LinkPage, LinkStatus, Owner } from './types'
 
 export const keys = {
   me: ['me'] as const,
+  /** Every Link query starts with this, so one invalidate covers every page and filter. */
+  links: ['links'] as const,
 }
 
 /**
@@ -70,5 +72,50 @@ export function useLogout() {
       // stranded on a dashboard that is no longer theirs. Verified by doing exactly that.
       queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== keys.me[0] })
     },
+  })
+}
+
+// ── links ────────────────────────────────────────────────────────────────────
+
+export interface LinkListParams {
+  page: number
+  size: number
+  /** Server-side substring match on Short Code or Destination. */
+  search: string
+  status: LinkStatus | ''
+}
+
+function linksPath({ page, size, search, status }: LinkListParams) {
+  const query = new URLSearchParams({ page: String(page), size: String(size) })
+  if (search) query.set('search', search)
+  if (status) query.set('status', status)
+  return `/links?${query.toString()}`
+}
+
+/**
+ * A page of the Owner's Links.
+ *
+ * `placeholderData` holds the previous page on screen while the next one loads. Without
+ * it every keystroke in the search box empties the table and refills it, which reads as
+ * the app breaking rather than as it working. It is also why there is no skeleton here:
+ * there is nothing to cover, because the old rows never leave.
+ */
+export function useLinks(params: LinkListParams) {
+  return useQuery({
+    queryKey: [...keys.links, params],
+    queryFn: () => api.get<LinkPage>(linksPath(params)),
+    placeholderData: (previous) => previous,
+  })
+}
+
+export function useCreateLink() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (request: CreateLinkRequest) => api.post<Link>('/links', request),
+    // Invalidate rather than write the new Link into the cached page by hand: the server
+    // decides the order, the page boundaries and the total, and a hand-patched list gets
+    // all three wrong the moment a filter is active.
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.links }),
   })
 }
