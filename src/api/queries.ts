@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useIsFetching, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, api } from './client'
 import type {
   ApiKey,
@@ -191,6 +191,28 @@ export function useLinkStats(id: string) {
     queryKey: [...keys.link(id), 'stats'],
     queryFn: () => api.get<LinkStats>(`/links/${id}/stats`),
   })
+}
+
+/**
+ * Refetches everything the detail screen shows about one Link.
+ *
+ * Invalidates the whole `['links', 'detail', id]` subtree rather than the stats query on
+ * its own, and that is correctness rather than tidiness: the screen shows
+ * `link.clickCount` in its detail block and `stats.totalClicks` in the section below,
+ * from two separate queries. Refreshing one would leave two click counts disagreeing on
+ * one screen, which is a worse answer than a stale number that is at least consistent
+ * with itself. The Destination history sits under the same prefix and comes along.
+ *
+ * `pending` counts every in-flight query in that subtree, not just the stats one, so the
+ * button stays disabled until the whole screen has caught up.
+ */
+export function useRefreshLink(id: string) {
+  const queryClient = useQueryClient()
+
+  return {
+    refresh: () => void queryClient.invalidateQueries({ queryKey: keys.link(id) }),
+    pending: useIsFetching({ queryKey: keys.link(id) }) > 0,
+  }
 }
 
 // ── verification and password reset ──────────────────────────────────────────

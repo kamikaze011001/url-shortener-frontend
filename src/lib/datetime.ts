@@ -42,3 +42,22 @@ export function formatMoment(iso: string) {
     timeZoneName: 'short',
   })
 }
+
+/**
+ * The wall clock, to the second.
+ *
+ * Seconds are the point rather than precision for its own sake. This stamps a "refreshed
+ * at" line, and Click counts are approximate and sporadic (FR-5.5) — so a refresh that
+ * returns the same numbers is the ordinary case, not the exception. Without a value that
+ * visibly changes, a working button is indistinguishable from a broken one.
+ *
+ * No date: this only ever labels something fetched moments ago, and a date beside it
+ * would be noise on every reading but the first after midnight.
+ */
+export function formatTimeOfDay(value: number | string) {
+  return new Date(value).toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+}

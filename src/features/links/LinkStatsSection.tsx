@@ -1,5 +1,7 @@
-import { useLinkStats } from '@/api/queries'
+import { useLinkStats, useRefreshLink } from '@/api/queries'
+import { Button } from '@/components/ui/Button'
 import { Plate } from '@/components/ui/Plate'
+import { formatTimeOfDay } from '@/lib/datetime'
 import { ClickChart } from './ClickChart'
 
 /**
@@ -12,18 +14,34 @@ import { ClickChart } from './ClickChart'
  * act on it will be looking.
  */
 export function LinkStatsSection({ linkId }: { linkId: string }) {
-  const { data: stats } = useLinkStats(linkId)
+  const { data: stats, dataUpdatedAt } = useLinkStats(linkId)
+  const { refresh, pending } = useRefreshLink(linkId)
 
   if (!stats) return null
 
   return (
     <Plate as="section" className="mt-8 p-6">
-      <div className="flex flex-wrap items-baseline gap-4">
+      {/* items-center, not items-baseline: a bordered 44px button has no text baseline
+          worth aligning to, and baseline-aligning it against a heading hangs it below
+          the row it belongs to. */}
+      <div className="flex flex-wrap items-center gap-4">
         <h2 className="font-display text-title mr-auto">Clicks</h2>
-        <p className="text-ink-soft font-body text-xs font-semibold tracking-[0.08em] uppercase">
-          {stats.from} to {stats.to} · UTC days
-        </p>
+
+        <Button variant="secondary" onClick={refresh} disabled={pending}>
+          {pending ? 'Refreshing…' : 'Refresh'}
+        </Button>
       </div>
+
+      {/* Announced, not merely shown. After a refresh that returns identical numbers —
+          the ordinary case, since Clicks are approximate and sporadic — this line is the
+          only evidence the button did anything, and someone using a screen reader needs
+          that evidence as much as anyone else. */}
+      <p
+        aria-live="polite"
+        className="text-ink-soft font-body mt-3 text-xs font-semibold tracking-[0.08em] uppercase"
+      >
+        {stats.from} to {stats.to} · UTC days · updated {formatTimeOfDay(dataUpdatedAt)}
+      </p>
 
       <p className="font-display mt-4 font-mono text-[3rem] leading-none font-medium">
         {stats.totalClicks}
