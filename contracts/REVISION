@@ -1,7 +1,8 @@
 Vendored from url-shortener-kb
 repo:     https://github.com/kamikaze011001/url-shortener-kb
-revision: 504c633bf2a79bbcbd69081612c1d2b90304b78a
+revision: 5b84352a49e641699d03ccf85630b8b0cc870da8
 branch:   main
+vendored: 2026-09-04T04:19:09Z
 
 Types in src/api/schema.d.ts are generated from contracts/openapi.yaml.
 Regenerate with: npm run api:types

@@ -3,6 +3,7 @@ import { ApiError, api } from './client'
 import type {
   ApiKey,
   ApiKeyCreated,
+  ApiKeyScope,
   CreateLinkRequest,
   DestinationChange,
   Link,
@@ -260,6 +261,17 @@ export function useApiKeys() {
 }
 
 /**
+ * `expiresInDays: null` means a key that never expires. Spelled `null` rather than left
+ * off, so a caller has to decide — a key's lifetime and its scopes are the two facts
+ * worth stating out loud, and an omitted field is a decision made by accident.
+ */
+export type CreateApiKeyInput = {
+  name: string
+  scopes: ApiKeyScope[]
+  expiresInDays: number | null
+}
+
+/**
  * The response carries the plaintext, and it is the only response that ever will. It is
  * deliberately *not* written into the list cache: the list's type has no `key` field,
  * and putting it there would create a copy that outlives the screen showing it.
@@ -268,7 +280,7 @@ export function useCreateApiKey() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (name: string) => api.post<ApiKeyCreated>('/api-keys', { name }),
+    mutationFn: (input: CreateApiKeyInput) => api.post<ApiKeyCreated>('/api-keys', input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.apiKeys }),
   })
 }
