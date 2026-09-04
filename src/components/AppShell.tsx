@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router'
+import { Link as RouterLink, Outlet } from 'react-router'
 import { useLogout, useMe } from '@/api/queries'
 import { Button } from '@/components/ui/Button'
 
@@ -20,6 +20,17 @@ export function AppShell() {
 
           {owner ? (
             <>
+              {/* Only for a verified Owner: an unverified one cannot create Links, so a
+                  credential for creating them programmatically is not the next step. */}
+              {owner.emailVerified ? (
+                <RouterLink
+                  to="/api-keys"
+                  className="text-ink-soft hover:text-ink font-body text-xs font-semibold tracking-[0.08em] uppercase underline decoration-2 underline-offset-4"
+                >
+                  API keys
+                </RouterLink>
+              ) : null}
+
               <p className="text-ink-soft font-mono text-[13px]">{owner.email}</p>
               <Button onClick={() => logout.mutate()} disabled={logout.isPending}>
                 Sign out

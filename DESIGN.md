@@ -263,6 +263,20 @@ every one of those has to be fought back to the tokens.
   visually hidden table, so a screen reader gets the data rather than a description of a
   picture of the data.
 
+### QR code
+
+Drawn as one SVG path from the computed modules — `ink` on `plate`, 3px `ink` border,
+zero radius, and a four-module quiet zone the spec requires for a scanner to find the
+code's edges at all.
+
+**Never decorated.** No logo through the middle, no rounded dots, no gradient. Each eats
+into the error-correction budget and measurably lowers the scan rate, and a code that
+fails on a poor camera in a lecture hall is worse than a plain one that works.
+
+It appears on the link detail screen and **not** in the creation reveal. The split-flap
+is the one bold moment in this system, and a QR beside it would split the attention it
+exists to hold.
+
 ### Split-flap code reveal — the signature
 
 When a link is created, its seven characters flip into place one at a time, ~40ms apart,

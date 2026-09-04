@@ -17,3 +17,7 @@ export type UpdateLinkRequest = components['schemas']['UpdateLinkRequest']
 
 /** `EXPIRED` is derived by the server from `expiresAt`; it is never stored. */
 export type LinkStatus = Link['status']
+
+export type DestinationChange = components['schemas']['DestinationChange']
+export type ApiKey = components['schemas']['ApiKey']
+export type ApiKeyCreated = components['schemas']['ApiKeyCreated']

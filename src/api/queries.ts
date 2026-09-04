@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, api } from './client'
 import type {
+  ApiKey,
+  ApiKeyCreated,
   CreateLinkRequest,
+  DestinationChange,
   Link,
   LinkPage,
   LinkStats,
@@ -16,6 +19,7 @@ export const keys = {
    *  and detail view at once. */
   links: ['links'] as const,
   link: (id: string) => ['links', 'detail', id] as const,
+  apiKeys: ['api-keys'] as const,
 }
 
 /**
@@ -230,5 +234,50 @@ export function useResetPassword() {
       queryClient.setQueryData(keys.me, null)
       queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== keys.me[0] })
     },
+  })
+}
+
+// ── destination history ──────────────────────────────────────────────────────
+
+/**
+ * The record ADR-0009 leans on when it argues a mutable Destination is accountable.
+ *
+ * Keyed under the Link so that editing one — which invalidates every Link query —
+ * refetches this too. A history list that still shows two entries after a third edit is
+ * worse than no history, because it looks authoritative.
+ */
+export function useLinkHistory(id: string) {
+  return useQuery({
+    queryKey: [...keys.link(id), 'history'],
+    queryFn: () => api.get<DestinationChange[]>(`/links/${id}/history`),
+  })
+}
+
+// ── api keys ─────────────────────────────────────────────────────────────────
+
+export function useApiKeys() {
+  return useQuery({ queryKey: keys.apiKeys, queryFn: () => api.get<ApiKey[]>('/api-keys') })
+}
+
+/**
+ * The response carries the plaintext, and it is the only response that ever will. It is
+ * deliberately *not* written into the list cache: the list's type has no `key` field,
+ * and putting it there would create a copy that outlives the screen showing it.
+ */
+export function useCreateApiKey() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (name: string) => api.post<ApiKeyCreated>('/api-keys', { name }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.apiKeys }),
+  })
+}
+
+export function useRevokeApiKey() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => api.delete<void>(`/api-keys/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.apiKeys }),
   })
 }

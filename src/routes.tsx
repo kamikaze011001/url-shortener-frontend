@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router'
 import { AppShell } from '@/components/AppShell'
+import { ApiKeysScreen } from '@/features/keys/ApiKeysScreen'
 import { AuthScreen } from '@/features/auth/AuthScreen'
 import { ForgotPasswordScreen } from '@/features/auth/ForgotPasswordScreen'
 import { ResetPasswordScreen } from '@/features/auth/ResetPasswordScreen'
@@ -33,6 +34,7 @@ export function AppRoutes() {
         <Route element={<AppShell />}>
           <Route path="/" element={<DashboardScreen />} />
           <Route path="/links/:id" element={<LinkDetailScreen />} />
+          <Route path="/api-keys" element={<ApiKeysScreen />} />
         </Route>
       </Route>
 

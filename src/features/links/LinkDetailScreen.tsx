@@ -5,8 +5,10 @@ import { Badge } from '@/components/ui/Badge'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { Plate } from '@/components/ui/Plate'
 import { formatMoment } from '@/lib/datetime'
+import { DestinationHistory } from './DestinationHistory'
 import { EditLinkForm } from './EditLinkForm'
 import { DeleteLinkButton, StatusToggle } from './LinkActions'
+import { LinkQrSection } from './LinkQrSection'
 import { LinkStatsSection } from './LinkStatsSection'
 
 /**
@@ -108,7 +110,13 @@ export function LinkDetailScreen() {
         </dl>
       </Plate>
 
+      <LinkQrSection link={link} />
+
       <LinkStatsSection linkId={link.id} />
+
+      {/* Renders nothing until the Destination has actually changed, so an untouched
+          Link does not carry a section announcing that it has no history. */}
+      <DestinationHistory linkId={link.id} />
 
       <div className="mt-8">
         {/* Keyed on updatedAt: a save re-seeds the fields from the server's answer. */}
