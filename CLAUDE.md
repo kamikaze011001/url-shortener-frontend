@@ -31,7 +31,8 @@ src/
 │   ├── ui/       design-system primitives: Button, Input, Plate, Badge
 │   └── ...       composed pieces: LinkRow, CreateLinkForm, SplitFlapCode
 ├── features/     one folder per screen: auth, links
-├── lib/          framework-free helpers
+├── hooks/        reusable React hooks — anything that calls another hook lives here
+├── lib/          framework-free helpers, importable from anywhere including a test
 └── styles/       tokens.css — the executable half of DESIGN.md
 ```
 
