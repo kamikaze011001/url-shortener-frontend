@@ -243,6 +243,26 @@ horizontal **patch line** in `hairline`, which is the switchboard idea made lite
 Status is a plate-bordered badge: `patch` for active, `ink-soft` for disabled, `signal`
 for expired.
 
+### Data display
+
+Statistics are drawn from the same three surfaces as everything else — no charting
+library, because one arrives with rounded corners, soft shadows and a gradient fill, and
+every one of those has to be fought back to the tokens.
+
+- **The daily series is `ink` bars** on a `hairline` baseline, one per day in the window.
+  A day with zero clicks keeps a 2px `hairline` sliver: the axis has to read as a run of
+  days, not as a gap where data is missing.
+- **Breakdown bars are `brass`,** and they are the one exception to "brass is never a
+  fill". They are 4px tall, and the rule exists to stop brass becoming a large flat plate
+  that swallows the shadow it is supposed to cast — a hairline-thin bar does not.
+- **Each breakdown is scaled to the largest row in its own list**, never to the total.
+  These are top-ten slices of an unbounded set, and a bar drawn as a share of the total
+  would quietly claim the tail is empty.
+- **A chart is not accessible by having a `title` attribute.** That is a mouse
+  affordance. The bars are `aria-hidden` and the same numbers are exposed as a real,
+  visually hidden table, so a screen reader gets the data rather than a description of a
+  picture of the data.
+
 ### Split-flap code reveal — the signature
 
 When a link is created, its seven characters flip into place one at a time, ~40ms apart,
