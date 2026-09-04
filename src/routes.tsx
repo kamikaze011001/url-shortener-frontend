@@ -1,6 +1,9 @@
 import { Route, Routes } from 'react-router'
 import { AppShell } from '@/components/AppShell'
 import { AuthScreen } from '@/features/auth/AuthScreen'
+import { ForgotPasswordScreen } from '@/features/auth/ForgotPasswordScreen'
+import { ResetPasswordScreen } from '@/features/auth/ResetPasswordScreen'
+import { VerifyEmailScreen } from '@/features/auth/VerifyEmailScreen'
 import { RequireSession } from '@/features/auth/RequireSession'
 import { DashboardScreen } from '@/features/links/DashboardScreen'
 import { LinkDetailScreen } from '@/features/links/LinkDetailScreen'
@@ -19,6 +22,12 @@ export function AppRoutes() {
     <Routes>
       <Route path="/login" element={<AuthScreen mode="login" />} />
       <Route path="/register" element={<AuthScreen mode="register" />} />
+      <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+      <Route path="/reset-password" element={<ResetPasswordScreen />} />
+
+      {/* Outside RequireSession's shell on purpose: it needs a session but not a
+          verified one, and it must stay reachable to the Owner who is stuck. */}
+      <Route path="/verify-email" element={<VerifyEmailScreen />} />
 
       <Route element={<RequireSession />}>
         <Route element={<AppShell />}>

@@ -33,6 +33,10 @@ export type ProblemCode =
   | 'INVALID_DESTINATION'
   | 'DESTINATION_NOT_ALLOWED'
   | 'RATE_LIMITED'
+  | 'EMAIL_NOT_VERIFIED'
+  | 'INVALID_CODE'
+  | 'CODE_EXPIRED'
+  | 'FORBIDDEN'
   | 'INTERNAL'
 
 /** Thrown for every non-2xx response, so callers handle one failure shape. */

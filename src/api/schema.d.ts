@@ -200,6 +200,200 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm an email address with a code
+         * @description Consumes the code and marks the Owner verified. Single-use, and dead after five
+         *     wrong attempts — see FR-1.11.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Verified. The returned Owner reports `emailVerified` as true. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Owner"];
+                    };
+                };
+                400: components["responses"]["BadCode"];
+                401: components["responses"]["Unauthenticated"];
+                429: components["responses"]["RateLimited"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/resend-verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a fresh verification code
+         * @description Answers `202` whether or not anything was sent. An already-verified Owner gets
+         *     the same response, so this endpoint reveals nothing that `/auth/me` does not
+         *     already tell the caller about their own account.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Accepted. A code is on its way if one was needed. */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["Unauthenticated"];
+                429: components["responses"]["RateLimited"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request a password reset code
+         * @description **Always answers `202`**, whether or not the address is registered (FR-1.12).
+         *     Answering "no such account" would hand back exactly the account-enumeration
+         *     oracle that the uniform `401` on login exists to close.
+         *
+         *     Rate limited per IP **and** per target address (FR-6.7). The per-address bucket
+         *     is what stops an attacker rotating IPs to flood one victim's inbox.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                    };
+                };
+            };
+            responses: {
+                /**
+                 * @description Accepted. A code was sent **only if** the address is registered — the
+                 *     response is identical either way.
+                 */
+                202: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["ValidationFailed"];
+                429: components["responses"]["RateLimited"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a new password using a reset code
+         * @description On success **every existing session for this Owner is invalidated** (FR-1.10),
+         *     including the one making this request. The Owner signs in again with the new
+         *     password.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** Format: email */
+                        email: string;
+                        code: string;
+                        password: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Password changed. Every session for this Owner is now invalid. */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["BadCode"];
+                429: components["responses"]["RateLimited"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/links": {
         parameters: {
             query?: never;
@@ -271,6 +465,7 @@ export interface paths {
                 };
                 400: components["responses"]["ValidationFailed"];
                 401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["EmailNotVerified"];
                 /**
                  * @description `ALIAS_TAKEN` — the Alias is already in the Code Namespace.
                  *     `RESERVED_ALIAS` — the Alias is a Reserved Word.
@@ -485,6 +680,196 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/links/{id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Destination history for a Link
+         * @description Every previous Destination, newest first, with who changed it and when.
+         *
+         *     This is the record [ADR-0009](./adr/0009-mutable-destination-with-audit.md)
+         *     relies on when it argues that a mutable Destination is defensible rather than a
+         *     loophole. Until this endpoint existed, that argument described a property the
+         *     product did not expose.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The changes, newest first. Empty for a Link never edited. */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DestinationChange"][];
+                    };
+                };
+                401: components["responses"]["Unauthenticated"];
+                404: components["responses"]["NotFound"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List this Owner's API Keys
+         * @description Never returns key material. Each entry carries a prefix and the last four
+         *     characters, which is enough to tell keys apart and not enough to use one.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The Owner's live keys, newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiKey"][];
+                    };
+                };
+                401: components["responses"]["Unauthenticated"];
+            };
+        };
+        put?: never;
+        /**
+         * Create an API Key
+         * @description **The only response that ever contains the key itself.** It is stored as a
+         *     SHA-256 hash and cannot be recovered — an Owner who loses it revokes it and
+         *     creates another.
+         *
+         *     Requires a session cookie. A request authenticated by an API Key may not manage
+         *     API Keys (FR-8.5), so a leaked key cannot mint more keys.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description For the Owner's own reference, e.g. "CI pipeline". */
+                        name: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Created. `key` appears here and nowhere else, ever. */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ApiKeyCreated"];
+                    };
+                };
+                400: components["responses"]["ValidationFailed"];
+                401: components["responses"]["Unauthenticated"];
+                /**
+                 * @description `FORBIDDEN` — the request was authenticated by an API Key, which may not
+                 *     manage API Keys.
+                 */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api-keys/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an API Key
+         * @description Takes effect on the next request. The row is kept, marked revoked — a key that
+         *     was used is evidence, and deleting the row would erase `lastUsedAt` along with
+         *     it.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Revoked */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["Unauthenticated"];
+                /** @description `FORBIDDEN` — an API Key may not manage API Keys. */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["Problem"];
+                    };
+                };
+                404: components["responses"]["NotFound"];
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/{code}": {
         parameters: {
             query?: never;
@@ -562,7 +947,7 @@ export interface components {
              * @description Machine-readable and part of the contract.
              * @enum {string}
              */
-            code: "VALIDATION_FAILED" | "UNAUTHENTICATED" | "NOT_FOUND" | "ALIAS_TAKEN" | "RESERVED_ALIAS" | "EMAIL_TAKEN" | "INVALID_DESTINATION" | "DESTINATION_NOT_ALLOWED" | "RATE_LIMITED" | "INTERNAL";
+            code: "VALIDATION_FAILED" | "UNAUTHENTICATED" | "NOT_FOUND" | "ALIAS_TAKEN" | "RESERVED_ALIAS" | "EMAIL_TAKEN" | "INVALID_DESTINATION" | "DESTINATION_NOT_ALLOWED" | "RATE_LIMITED" | "EMAIL_NOT_VERIFIED" | "INVALID_CODE" | "CODE_EXPIRED" | "FORBIDDEN" | "INTERNAL";
             errors?: {
                 field?: string;
                 message?: string;
@@ -573,8 +958,44 @@ export interface components {
             id: string;
             /** Format: email */
             email: string;
+            /**
+             * @description Read fresh on every authenticated request rather than carried as a JWT
+             *     claim, so it cannot be stale — an Owner who verifies does not have to sign
+             *     out and back in. See ADR-0018.
+             */
+            emailVerified: boolean;
             /** Format: date-time */
             createdAt: string;
+        };
+        DestinationChange: {
+            id: string;
+            /** Format: uri */
+            oldDestination: string;
+            /** Format: uri */
+            newDestination: string;
+            /** Format: date-time */
+            changedAt: string;
+        };
+        ApiKey: {
+            id: string;
+            name: string;
+            /** @description The leading characters, e.g. `sk_live_8f2a`. */
+            keyPrefix: string;
+            last4: string;
+            /**
+             * Format: date-time
+             * @description Null until the key is first used. Best-effort, not exact.
+             */
+            lastUsedAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ApiKeyCreated: components["schemas"]["ApiKey"] & {
+            /**
+             * @description The plaintext key. **Present in this one response and nowhere else,
+             *     ever.** Only a SHA-256 hash is stored, so it cannot be shown again.
+             */
+            key: string;
         };
         Link: {
             id: string;
@@ -696,6 +1117,38 @@ export interface components {
         };
         /** @description `VALIDATION_FAILED` — see the `errors` array for the fields */
         ValidationFailed: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /**
+         * @description `EMAIL_NOT_VERIFIED` — the Owner exists and is signed in, but has not confirmed
+         *     their address, so they may not create Links (FR-1.7).
+         *
+         *     Deliberately **not** the uniform `404` of
+         *     [ADR-0008](./adr/0008-soft-delete-and-uniform-404.md). That rule exists to avoid
+         *     confirming whether a *resource* exists; here the caller is asking about their
+         *     own account, already knows it exists, and needs to be told what to do next.
+         */
+        EmailNotVerified: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /**
+         * @description `INVALID_CODE` — wrong digits, already used, or too many attempts.
+         *     `CODE_EXPIRED` — past its ten-minute life; request another.
+         *
+         *     The two are distinguished because the fix differs: one means try again, the
+         *     other means start over. Neither reveals whether an account exists.
+         */
+        BadCode: {
             headers: {
                 [name: string]: unknown;
             };

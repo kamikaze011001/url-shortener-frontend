@@ -95,6 +95,15 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
           <Button type="submit" variant="primary" disabled={submit.isPending}>
             {mode === 'login' ? 'Sign in' : 'Create account'}
           </Button>
+
+          {mode === 'login' ? (
+            <RouterLink
+              to="/forgot-password"
+              className="text-ink-soft hover:text-ink text-[13px] underline decoration-2 underline-offset-4"
+            >
+              Forgotten your password?
+            </RouterLink>
+          ) : null}
         </form>
 
         <p className="text-ink-soft mt-6 text-[13px]">

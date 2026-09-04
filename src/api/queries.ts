@@ -187,3 +187,48 @@ export function useLinkStats(id: string) {
     queryFn: () => api.get<LinkStats>(`/links/${id}/stats`),
   })
 }
+
+// ── verification and password reset ──────────────────────────────────────────
+
+/**
+ * Every one of these writes the fresh Owner into the session cache or clears it, rather
+ * than invalidating and refetching. The screens that call them navigate immediately on
+ * success, and a refetch racing a redirect is how a "verify" button lands you back on
+ * the screen telling you to verify.
+ */
+export function useVerifyEmail() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (code: string) => api.post<Owner>('/auth/verify-email', { code }),
+    onSuccess: (owner) => queryClient.setQueryData(keys.me, owner),
+  })
+}
+
+export function useResendVerification() {
+  return useMutation({ mutationFn: () => api.post<void>('/auth/resend-verification') })
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: (email: string) => api.post<void>('/auth/forgot-password', { email }),
+  })
+}
+
+/**
+ * On success every session for this Owner is gone, including this one — so the cache is
+ * cleared and `me` set to signed-out, which is the same shape logout uses. Leaving a
+ * stale Owner cached would show a dashboard that 401s on its first request.
+ */
+export function useResetPassword() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (request: { email: string; code: string; password: string }) =>
+      api.post<void>('/auth/reset-password', request),
+    onSuccess: () => {
+      queryClient.setQueryData(keys.me, null)
+      queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== keys.me[0] })
+    },
+  })
+}

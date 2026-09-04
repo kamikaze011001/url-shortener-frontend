@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLinks } from '@/api/queries'
+import { useLinks, useMe } from '@/api/queries'
 import type { LinkStatus } from '@/api/types'
 import { Button } from '@/components/ui/Button'
 import { Plate } from '@/components/ui/Plate'
@@ -7,6 +7,18 @@ import { useDebounced } from '@/hooks/useDebounced'
 import { LinkRow } from './LinkRow'
 
 const PAGE_SIZE = 20
+
+/**
+ * An empty state is an instruction, so it has to point at something that exists. For an
+ * unverified Owner there is no create form on the screen — VerificationRequired stands
+ * where it would be — and telling them to use "the form above" would send them looking
+ * for a control that is not there.
+ */
+function emptyMessage(filtered: boolean, verified: boolean) {
+  if (filtered) return 'No links match that search. Try a different code or destination.'
+  if (!verified) return 'Confirm your email address and your first link can go here.'
+  return 'Shorten your first URL using the form above.'
+}
 
 const FILTERS: { value: LinkStatus | ''; label: string }[] = [
   { value: '', label: 'All' },
@@ -16,6 +28,7 @@ const FILTERS: { value: LinkStatus | ''; label: string }[] = [
 ]
 
 export function LinkTable() {
+  const { data: owner } = useMe()
   const [searchInput, setSearchInput] = useState('')
   const [status, setStatus] = useState<LinkStatus | ''>('')
   const [page, setPage] = useState(0)
@@ -87,9 +100,7 @@ export function LinkTable() {
             feedback. Nothing is shown until there is something to show. */}
         {data && data.content.length === 0 ? (
           <p className="text-ink-soft px-6 py-10 text-[15px]">
-            {filtered
-              ? 'No links match that search. Try a different code or destination.'
-              : 'Shorten your first URL using the form above.'}
+            {emptyMessage(filtered, owner?.emailVerified ?? true)}
           </p>
         ) : null}
       </Plate>
