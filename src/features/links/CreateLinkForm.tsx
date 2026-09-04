@@ -4,6 +4,8 @@ import { useCreateLink } from '@/api/queries'
 import type { CreateLinkRequest, Link } from '@/api/types'
 import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
+import { FormAlert } from '@/components/ui/FormAlert'
+import { RetryCountdown } from '@/components/ui/RetryCountdown'
 import { Plate } from '@/components/ui/Plate'
 
 /**
@@ -81,13 +83,13 @@ export function CreateLinkForm({ onCreated }: { onCreated: (link: Link) => void 
           />
         </div>
 
-        {formError(failure) ? (
-          <p
-            role="alert"
-            className="border-signal shadow-plate-signal text-signal mt-5 border-3 p-3 text-[13px] font-medium"
-          >
-            {formError(failure)}
-          </p>
+        {failure?.problem.code === 'RATE_LIMITED' ? (
+          <FormAlert className="mt-5">
+            {/* Keyed on the attempt so each rejection restarts the count. */}
+            <RetryCountdown key={create.failureCount} seconds={failure.retryAfterSeconds ?? 60} />
+          </FormAlert>
+        ) : formError(failure) ? (
+          <FormAlert className="mt-5">{formError(failure)}</FormAlert>
         ) : null}
 
         <Button type="submit" variant="primary" className="mt-6" disabled={create.isPending}>
@@ -132,8 +134,7 @@ function destinationError(failure: ApiError | null) {
 function formError(failure: ApiError | null) {
   if (!failure) return undefined
   switch (failure.problem.code) {
-    case 'RATE_LIMITED':
-      return 'You have created a lot of links just now. Wait a minute and try again.'
+    case 'RATE_LIMITED': // rendered as a countdown by the caller
     case 'ALIAS_TAKEN':
     case 'RESERVED_ALIAS':
     case 'INVALID_DESTINATION':

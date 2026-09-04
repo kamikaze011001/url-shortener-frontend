@@ -41,16 +41,42 @@ export class ApiError extends Error {
   // on, so TypeScript-only syntax that emits runtime code is rejected.
   readonly problem: Problem
 
-  constructor(problem: Problem) {
+  /**
+   * From the `Retry-After` header, in seconds, when the server sent one.
+   *
+   * Read from the header rather than parsed out of `detail`: the header is part of the
+   * contract and the prose is not, so a reworded message must not be able to break the
+   * countdown the user is watching.
+   */
+  readonly retryAfterSeconds: number | undefined
+
+  constructor(problem: Problem, retryAfterSeconds?: number) {
     super(problem.detail ?? problem.title)
     this.name = 'ApiError'
     this.problem = problem
+    this.retryAfterSeconds = retryAfterSeconds
   }
 
   /** True when the field is the one the server rejected — used to mark inputs. */
   fieldError(field: string): string | undefined {
     return this.problem.errors?.find((e) => e.field === field)?.message
   }
+}
+
+/**
+ * RFC 9110 allows `Retry-After` to be either a delay in seconds or an HTTP date. This
+ * server always sends seconds, but a proxy in front of it may not, so the date form is
+ * handled rather than silently parsed as NaN.
+ */
+function retryAfter(response: Response): number | undefined {
+  const header = response.headers.get('Retry-After')
+  if (!header) return undefined
+
+  const seconds = Number(header)
+  if (Number.isFinite(seconds)) return Math.max(0, Math.round(seconds))
+
+  const when = Date.parse(header)
+  return Number.isNaN(when) ? undefined : Math.max(0, Math.round((when - Date.now()) / 1000))
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -75,6 +101,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         status: response.status,
         code: 'INTERNAL',
       },
+      retryAfter(response),
     )
   }
   return body as T
