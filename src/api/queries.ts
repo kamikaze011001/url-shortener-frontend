@@ -4,6 +4,7 @@ import type {
   CreateLinkRequest,
   Link,
   LinkPage,
+  LinkStats,
   LinkStatus,
   Owner,
   UpdateLinkRequest,
@@ -169,5 +170,20 @@ export function useDeleteLink(id: string) {
       queryClient.removeQueries({ queryKey: keys.link(id) })
       void queryClient.invalidateQueries({ queryKey: keys.links })
     },
+  })
+}
+
+/**
+ * Click statistics for one Link.
+ *
+ * The window is the server's default — the last thirty days. There is no range picker
+ * yet, and adding one belongs here rather than in the component: the range is part of
+ * the query key, so two ranges are two cache entries and switching between them is
+ * instant on the second look.
+ */
+export function useLinkStats(id: string) {
+  return useQuery({
+    queryKey: [...keys.link(id), 'stats'],
+    queryFn: () => api.get<LinkStats>(`/links/${id}/stats`),
   })
 }

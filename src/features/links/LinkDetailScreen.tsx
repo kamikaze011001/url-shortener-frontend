@@ -7,6 +7,7 @@ import { Plate } from '@/components/ui/Plate'
 import { formatMoment } from '@/lib/datetime'
 import { EditLinkForm } from './EditLinkForm'
 import { DeleteLinkButton, StatusToggle } from './LinkActions'
+import { LinkStatsSection } from './LinkStatsSection'
 
 /**
  * One Link, in full: what it is, where it points, and the two things that can be done to
@@ -106,6 +107,8 @@ export function LinkDetailScreen() {
           </Detail>
         </dl>
       </Plate>
+
+      <LinkStatsSection linkId={link.id} />
 
       <div className="mt-8">
         {/* Keyed on updatedAt: a save re-seeds the fields from the server's answer. */}
