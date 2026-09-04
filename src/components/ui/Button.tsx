@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from 'react'
+import type { ButtonHTMLAttributes, Ref } from 'react'
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'ghost'
 
@@ -42,7 +42,13 @@ export function Button({
   type = 'button',
   className = '',
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; pressed?: boolean }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: Variant
+  pressed?: boolean
+  // React 19 passes `ref` as an ordinary prop to function components, so there is no
+  // forwardRef wrapper here — it only has to be declared to be forwarded by the spread.
+  ref?: Ref<HTMLButtonElement>
+}) {
   return (
     <button
       type={type}

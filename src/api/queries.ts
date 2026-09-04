@@ -1,11 +1,20 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ApiError, api } from './client'
-import type { CreateLinkRequest, Link, LinkPage, LinkStatus, Owner } from './types'
+import type {
+  CreateLinkRequest,
+  Link,
+  LinkPage,
+  LinkStatus,
+  Owner,
+  UpdateLinkRequest,
+} from './types'
 
 export const keys = {
   me: ['me'] as const,
-  /** Every Link query starts with this, so one invalidate covers every page and filter. */
+  /** Every Link query starts with this, so one invalidate covers every page, filter
+   *  and detail view at once. */
   links: ['links'] as const,
+  link: (id: string) => ['links', 'detail', id] as const,
 }
 
 /**
@@ -117,5 +126,48 @@ export function useCreateLink() {
     // decides the order, the page boundaries and the total, and a hand-patched list gets
     // all three wrong the moment a filter is active.
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.links }),
+  })
+}
+
+export function useLink(id: string) {
+  return useQuery({
+    queryKey: keys.link(id),
+    queryFn: () => api.get<Link>(`/links/${id}`),
+  })
+}
+
+/**
+ * The response is written straight into the detail cache and the lists are invalidated.
+ * Writing the response rather than refetching matters here: a PATCH answers with the Link
+ * as the server now sees it, including `status` flipping to `EXPIRED` on its own when the
+ * new `expiresAt` is in the past. Refetching would show the same thing a moment later;
+ * this shows it immediately, and there is no window where the screen disagrees.
+ */
+export function useUpdateLink(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (request: UpdateLinkRequest) => api.patch<Link>(`/links/${id}`, request),
+    onSuccess: (link) => {
+      queryClient.setQueryData(keys.link(id), link)
+      void queryClient.invalidateQueries({ queryKey: keys.links })
+    },
+  })
+}
+
+/**
+ * Soft delete. The Link stops resolving and leaves the list, but the row is kept and the
+ * Short Code is never released — reusing a code would silently repoint a link somebody
+ * has already shared. The UI says so at the point of confirmation.
+ */
+export function useDeleteLink(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => api.delete<void>(`/links/${id}`),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: keys.link(id) })
+      void queryClient.invalidateQueries({ queryKey: keys.links })
+    },
   })
 }

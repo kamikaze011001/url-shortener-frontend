@@ -1,15 +1,19 @@
+import { Link as RouterLink } from 'react-router'
 import type { Link } from '@/api/types'
 import { Badge } from '@/components/ui/Badge'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { truncateMiddle } from '@/lib/truncate'
+import { StatusToggle } from './LinkActions'
 
 /**
  * One Link, as a row on desktop and a stacked plate below `md`.
  *
  * The patch line between the code and the destination is the switchboard idea made
  * literal: an operator's cord running from one to the other. It is decoration with a
- * meaning, and it is `aria-hidden` because a screen reader reading "line" would be told
- * nothing.
+ * meaning, and it is `aria-hidden` because "line" tells a screen reader nothing.
+ *
+ * Actions here are the reversible ones. Editing and deleting live on the detail screen,
+ * where there is room to say what they do before they happen.
  */
 export function LinkRow({ link }: { link: Link }) {
   return (
@@ -42,7 +46,17 @@ export function LinkRow({ link }: { link: Link }) {
           {link.clickCount} {link.clickCount === 1 ? 'click' : 'clicks'}
         </p>
 
+        <StatusToggle link={link} />
         <CopyButton value={link.shortUrl} variant="ghost" />
+
+        <RouterLink
+          to={`/links/${link.id}`}
+          className="text-ink-soft hover:text-ink font-body inline-flex min-h-11 items-center text-xs font-semibold tracking-[0.08em] uppercase underline decoration-2 underline-offset-4"
+        >
+          {/* Named for the Link, not for the row: several of these end up in one list, and
+              "Details" alone gives a screen reader no way to tell them apart. */}
+          Details<span className="sr-only"> for {link.code}</span>
+        </RouterLink>
       </div>
     </li>
   )
