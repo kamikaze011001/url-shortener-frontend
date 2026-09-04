@@ -4,6 +4,7 @@ import { useUpdateLink } from '@/api/queries'
 import type { Link, UpdateLinkRequest } from '@/api/types'
 import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
+import { FormAlert } from '@/components/ui/FormAlert'
 import { Plate } from '@/components/ui/Plate'
 import { toInstant, toLocalInput } from '@/lib/datetime'
 
@@ -72,14 +73,7 @@ export function EditLinkForm({ link }: { link: Link }) {
           error={failure?.fieldError('expiresAt')}
         />
 
-        {formError(failure) ? (
-          <p
-            role="alert"
-            className="border-signal shadow-plate-signal text-signal mt-5 border-3 p-3 text-[13px] font-medium"
-          >
-            {formError(failure)}
-          </p>
-        ) : null}
+        {formError(failure) ? <FormAlert className="mt-5">{formError(failure)}</FormAlert> : null}
 
         <div className="mt-6 flex flex-wrap items-center gap-4">
           <Button type="submit" variant="primary" disabled={!changed || update.isPending}>

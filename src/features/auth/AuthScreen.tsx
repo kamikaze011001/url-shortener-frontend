@@ -4,6 +4,8 @@ import { ApiError } from '@/api/client'
 import { useLogin, useMe, useRegister } from '@/api/queries'
 import { Button } from '@/components/ui/Button'
 import { Field } from '@/components/ui/Field'
+import { FormAlert } from '@/components/ui/FormAlert'
+import { RetryCountdown } from '@/components/ui/RetryCountdown'
 import { Plate } from '@/components/ui/Plate'
 
 /**
@@ -80,13 +82,14 @@ export function AuthScreen({ mode }: { mode: 'login' | 'register' }) {
             error={fieldError(failure, 'password', mode)}
           />
 
-          {formError(failure) ? (
-            <p
-              role="alert"
-              className="border-signal shadow-plate-signal text-signal border-3 p-3 text-[13px] font-medium"
-            >
-              {formError(failure)}
-            </p>
+          {failure?.problem.code === 'RATE_LIMITED' ? (
+            <FormAlert>
+              {/* Keyed on the attempt so each rejection restarts the count rather than
+                  resuming the previous one. */}
+              <RetryCountdown key={submit.failureCount} seconds={failure.retryAfterSeconds ?? 60} />
+            </FormAlert>
+          ) : formError(failure) ? (
+            <FormAlert>{formError(failure)}</FormAlert>
           ) : null}
 
           <Button type="submit" variant="primary" disabled={submit.isPending}>
@@ -142,8 +145,7 @@ function formError(failure: ApiError | null) {
     // no more information than the user does, so it says the same thing.
     case 'UNAUTHENTICATED':
       return 'Email or password is incorrect.'
-    case 'RATE_LIMITED':
-      return 'Too many attempts. Wait a minute and try again.'
+    case 'RATE_LIMITED': // rendered as a countdown by the caller
     case 'EMAIL_TAKEN':
     case 'VALIDATION_FAILED':
       return undefined
