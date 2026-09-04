@@ -430,12 +430,15 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["InsufficientScope"];
             };
         };
         put?: never;
         /**
          * Create a Link
-         * @description With no `alias`, a 7-character base62 Short Code is generated. With an
+         * @description **Requires the `links:write` scope** when authenticated by an API Key.
+         *
+         *     With no `alias`, a 7-character base62 Short Code is generated. With an
          *     `alias`, that exact string is claimed or the request fails — it never
          *     silently falls back to a generated code.
          *
@@ -465,7 +468,7 @@ export interface paths {
                 };
                 400: components["responses"]["ValidationFailed"];
                 401: components["responses"]["Unauthenticated"];
-                403: components["responses"]["EmailNotVerified"];
+                403: components["responses"]["LinkCreationForbidden"];
                 /**
                  * @description `ALIAS_TAKEN` — the Alias is already in the Code Namespace.
                  *     `RESERVED_ALIAS` — the Alias is a Reserved Word.
@@ -544,6 +547,7 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["InsufficientScope"];
                 404: components["responses"]["NotFound"];
             };
         };
@@ -551,7 +555,9 @@ export interface paths {
         post?: never;
         /**
          * Delete a Link
-         * @description Soft delete. The Link stops redirecting and leaves the Owner's list, but
+         * @description **Requires the `links:write` scope** when authenticated by an API Key.
+         *
+         *     Soft delete. The Link stops redirecting and leaves the Owner's list, but
          *     the row is retained and **the Short Code is never released**. Reusing a
          *     code would silently repoint a link that someone has already shared.
          */
@@ -574,6 +580,7 @@ export interface paths {
                     content?: never;
                 };
                 401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["InsufficientScope"];
                 404: components["responses"]["NotFound"];
             };
         };
@@ -581,7 +588,9 @@ export interface paths {
         head?: never;
         /**
          * Update a Link
-         * @description Only `destination`, `status` and `expiresAt` are mutable. The Short Code
+         * @description **Requires the `links:write` scope** when authenticated by an API Key.
+         *
+         *     Only `destination`, `status` and `expiresAt` are mutable. The Short Code
          *     can never change: renaming would release the old string back into the
          *     Code Namespace for someone else to claim.
          *
@@ -617,6 +626,7 @@ export interface paths {
                 };
                 400: components["responses"]["ValidationFailed"];
                 401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["InsufficientScope"];
                 404: components["responses"]["NotFound"];
                 /** @description `INVALID_DESTINATION` or `DESTINATION_NOT_ALLOWED` */
                 422: {
@@ -640,7 +650,9 @@ export interface paths {
         };
         /**
          * Click statistics for a Link
-         * @description Counts are approximate by design — analytics, not an audit log.
+         * @description **Requires the `links:read` scope** when authenticated by an API Key.
+         *
+         *     Counts are approximate by design — analytics, not an audit log.
          *     Visible only to the Owner.
          */
         get: {
@@ -669,6 +681,7 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["InsufficientScope"];
                 404: components["responses"]["NotFound"];
             };
         };
@@ -689,7 +702,9 @@ export interface paths {
         };
         /**
          * Destination history for a Link
-         * @description Every previous Destination, newest first, with who changed it and when.
+         * @description **Requires the `links:read` scope** when authenticated by an API Key.
+         *
+         *     Every previous Destination, newest first, with who changed it and when.
          *
          *     This is the record [ADR-0009](./adr/0009-mutable-destination-with-audit.md)
          *     relies on when it argues that a mutable Destination is defensible rather than a
@@ -717,6 +732,7 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["InsufficientScope"];
                 404: components["responses"]["NotFound"];
             };
         };
@@ -783,6 +799,19 @@ export interface paths {
                     "application/json": {
                         /** @description For the Owner's own reference, e.g. "CI pipeline". */
                         name: string;
+                        /**
+                         * @description At least one. There is no default: a key's authority is the one
+                         *     thing about it worth stating out loud.
+                         */
+                        scopes: components["schemas"]["ApiKeyScope"][];
+                        /**
+                         * @description Lifetime from now. Omit or send `null` for a key that never expires.
+                         *
+                         *     A duration rather than an absolute timestamp: a caller sending a
+                         *     timestamp needs a clock and a timezone, and the server owns the
+                         *     clock either way.
+                         */
+                        expiresInDays?: number | null;
                     };
                 };
             };
@@ -947,7 +976,7 @@ export interface components {
              * @description Machine-readable and part of the contract.
              * @enum {string}
              */
-            code: "VALIDATION_FAILED" | "UNAUTHENTICATED" | "NOT_FOUND" | "ALIAS_TAKEN" | "RESERVED_ALIAS" | "EMAIL_TAKEN" | "INVALID_DESTINATION" | "DESTINATION_NOT_ALLOWED" | "RATE_LIMITED" | "EMAIL_NOT_VERIFIED" | "INVALID_CODE" | "CODE_EXPIRED" | "FORBIDDEN" | "INTERNAL";
+            code: "VALIDATION_FAILED" | "UNAUTHENTICATED" | "NOT_FOUND" | "ALIAS_TAKEN" | "RESERVED_ALIAS" | "EMAIL_TAKEN" | "INVALID_DESTINATION" | "DESTINATION_NOT_ALLOWED" | "RATE_LIMITED" | "EMAIL_NOT_VERIFIED" | "INVALID_CODE" | "CODE_EXPIRED" | "INSUFFICIENT_SCOPE" | "FORBIDDEN" | "INTERNAL";
             errors?: {
                 field?: string;
                 message?: string;
@@ -976,12 +1005,30 @@ export interface components {
             /** Format: date-time */
             changedAt: string;
         };
+        /**
+         * @description What a key is allowed to do. Neither implies the other — `links:write` without
+         *     `links:read` is a key that can create Links but cannot enumerate them, which is
+         *     the shape a load generator wants.
+         *
+         *     There is no scope for managing API Keys. A key may never do that, whatever its
+         *     scopes say (FR-8.5); expressing it as a scope would make it grantable.
+         * @enum {string}
+         */
+        ApiKeyScope: "links:read" | "links:write";
         ApiKey: {
             id: string;
             name: string;
             /** @description The leading characters, e.g. `sk_live_8f2a`. */
             keyPrefix: string;
             last4: string;
+            scopes: components["schemas"]["ApiKeyScope"][];
+            /**
+             * Format: date-time
+             * @description Null when the key never expires. A key past this moment authenticates
+             *     nothing, but stays in this list, marked expired, so the Owner debugging a
+             *     broken script can see why (FR-8.11).
+             */
+            expiresAt?: string | null;
             /**
              * Format: date-time
              * @description Null until the key is first used. Best-effort, not exact.
@@ -1125,15 +1172,40 @@ export interface components {
             };
         };
         /**
-         * @description `EMAIL_NOT_VERIFIED` — the Owner exists and is signed in, but has not confirmed
-         *     their address, so they may not create Links (FR-1.7).
+         * @description Two codes share this status, and the fix differs for each — `code` is what tells
+         *     them apart.
          *
-         *     Deliberately **not** the uniform `404` of
+         *     `EMAIL_NOT_VERIFIED` — the Owner exists and is signed in, but has not confirmed
+         *     their address, so they may not create Links (FR-1.7). Deliberately **not** the
+         *     uniform `404` of
          *     [ADR-0008](./adr/0008-soft-delete-and-uniform-404.md). That rule exists to avoid
          *     confirming whether a *resource* exists; here the caller is asking about their
          *     own account, already knows it exists, and needs to be told what to do next.
+         *
+         *     `INSUFFICIENT_SCOPE` — the request authenticated with an API Key that was not
+         *     granted `links:write` (FR-8.10).
+         *
+         *     The order matters: verification is checked first, because an unverified Owner
+         *     cannot create Links with *any* credential (FR-8.8) and telling them to widen a
+         *     key's scopes would send them to fix the wrong thing.
          */
-        EmailNotVerified: {
+        LinkCreationForbidden: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /**
+         * @description `INSUFFICIENT_SCOPE` — the request authenticated correctly, with an API Key whose
+         *     scopes do not cover this endpoint (FR-8.10). The `detail` names the scope that
+         *     was needed, because the audience is someone reading a script's log at the point
+         *     where they can fix it.
+         *
+         *     A session cookie never sees this: a session carries every scope.
+         */
+        InsufficientScope: {
             headers: {
                 [name: string]: unknown;
             };

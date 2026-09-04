@@ -36,6 +36,7 @@ export type ProblemCode =
   | 'EMAIL_NOT_VERIFIED'
   | 'INVALID_CODE'
   | 'CODE_EXPIRED'
+  | 'INSUFFICIENT_SCOPE'
   | 'FORBIDDEN'
   | 'INTERNAL'
 
