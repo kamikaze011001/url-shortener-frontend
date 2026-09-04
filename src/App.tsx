@@ -1,47 +1,44 @@
-import { useState } from 'react'
-import { SplitFlapCode } from './components/SplitFlapCode'
-import { Plate } from './components/ui/Plate'
-
-const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
-
-function sampleCode() {
-  return Array.from(
-    { length: 7 },
-    () => ALPHABET[Math.floor(Math.random() * ALPHABET.length)],
-  ).join('')
-}
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter } from 'react-router'
+import { ApiError } from './api/client'
+import { keys } from './api/queries'
+import { AppRoutes } from './routes'
 
 /**
- * Scaffold only: proves the token layer renders and the signature animation works.
- * Replaced by the router and real screens in the next step.
+ * A 401 from *any* request means the session ended while the app was open — the JWT
+ * expired, or someone signed out in another tab. There is no way to see that coming: the
+ * cookie is `httpOnly`, so the app cannot inspect the token's expiry and find out early.
+ *
+ * Recording it as "signed out" in one place lets the route guard do what it already does,
+ * instead of every screen learning to handle a dead session. Without this the user gets a
+ * dashboard that answers nothing.
  */
+function recordSignedOutOn401(error: unknown) {
+  if (error instanceof ApiError && error.problem.status === 401) {
+    queryClient.setQueryData(keys.me, null)
+  }
+}
+
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({ onError: recordSignedOutOn401 }),
+  mutationCache: new MutationCache({ onError: recordSignedOutOn401 }),
+  defaultOptions: {
+    queries: {
+      // Every failure that reaches here is an `ApiError` carrying a Problem, and a 401 or
+      // a 404 is a final answer — retrying it only delays the screen the user should be
+      // seeing. A genuinely flaky network is not worth three seconds of nothing.
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
 export function App() {
-  const [code, setCode] = useState(sampleCode)
-
   return (
-    <main className="mx-auto max-w-[1120px] px-6 py-16">
-      <p className="text-ink-soft font-body text-xs font-semibold tracking-[0.08em] uppercase">
-        Switchboard
-      </p>
-      <h1 className="font-display mt-3 text-[3.5rem] leading-[0.95] font-extrabold tracking-[-0.03em]">
-        One string,
-        <br />
-        patched through.
-      </h1>
-
-      <Plate className="mt-10 flex max-w-xl flex-col items-start p-6">
-        <p className="text-ink-soft font-body mb-4 text-xs font-semibold tracking-[0.08em] uppercase">
-          Short code
-        </p>
-        <SplitFlapCode code={code} />
-        <button
-          type="button"
-          onClick={() => setCode(sampleCode())}
-          className="border-ink bg-ink text-plate shadow-plate hover:bg-ink-soft active:shadow-plate-pressed font-body mt-6 min-h-11 border-3 px-5 text-xs font-semibold tracking-[0.08em] uppercase transition-shadow active:translate-x-[3px] active:translate-y-[3px]"
-        >
-          Generate another
-        </button>
-      </Plate>
-    </main>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
+    </QueryClientProvider>
   )
 }

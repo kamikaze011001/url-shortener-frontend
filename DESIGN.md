@@ -175,14 +175,20 @@ is at least the shadow depth plus 4px, or the shadow lands on its neighbour.
 
 One elevation, expressed three ways:
 
-| Token                  | Value             | Meaning                                        |
-| ---------------------- | ----------------- | ---------------------------------------------- |
-| `shadow-plate`         | `4px 4px 0 brass` | At rest.                                       |
-| `shadow-plate-lg`      | `7px 7px 0 brass` | Hover on an interactive plate.                 |
-| `shadow-plate-pressed` | `1px 1px 0 brass` | Active/pressed, with a matching 3px translate. |
+| Token                  | Value              | Meaning                                        |
+| ---------------------- | ------------------ | ---------------------------------------------- |
+| `shadow-plate`         | `4px 4px 0 brass`  | At rest.                                       |
+| `shadow-plate-lg`      | `7px 7px 0 brass`  | Hover on an interactive plate.                 |
+| `shadow-plate-pressed` | `1px 1px 0 brass`  | Active/pressed, with a matching 3px translate. |
+| `shadow-plate-signal`  | `4px 4px 0 signal` | The one exception: a form-level error plate.   |
 
 Press moves the element _toward_ its shadow, so the plate feels physically pushed. That
 is the entire interaction language — no fades, no scale.
+
+`shadow-plate-signal` exists because a form-level error is a plate, and a plate with a
+brass shadow beside red text reads as decoration rather than as the thing that went
+wrong. It is the only place a shadow is not brass, and it is deliberately not used on
+field-level errors — one red border per problem is enough.
 
 There are no blurred shadows anywhere. A soft shadow in this system reads as a bug.
 
@@ -219,7 +225,13 @@ placeholder standing in for a label — a placeholder disappears exactly when th
 needs it.
 
 Errors: 3px `signal` border plus a message below in `signal`. Never colour alone;
-colour alone excludes anyone who cannot distinguish it.
+colour alone excludes anyone who cannot distinguish it. The message is wired to the input
+with `aria-describedby` and the input carries `aria-invalid`, so it is announced and not
+merely visible.
+
+A **form-level** error — one that belongs to the submission rather than to a field, such
+as a wrong password — is a `signal`-bordered plate above the submit button, carrying
+`shadow-plate-signal` and `role="alert"`.
 
 ### The link row
 
